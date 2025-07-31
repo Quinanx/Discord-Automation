@@ -64,27 +64,6 @@
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
-        .channel-tag {
-            display: inline-flex;
-            align-items: center;
-            background-color: #e0e7ff;
-            border-radius: 9999px;
-            padding: 0.25rem 0.75rem;
-            font-size: 0.875rem;
-            margin: 0.25rem;
-        }
-        .channel-tag button {
-            margin-left: 0.5rem;
-            color: #818cf8;
-        }
-        .token-item {
-            display: flex;
-            align-items: center;
-            background-color: #f3f4f6;
-            border-radius: 0.5rem;
-            padding: 0.5rem 1rem;
-            margin-bottom: 0.5rem;
-        }
         .status-indicator {
             width: 12px;
             height: 12px;
@@ -97,6 +76,33 @@
         }
         .status-inactive {
             background-color: #9ca3af;
+        }
+        .terminal {
+            font-family: 'Courier New', monospace;
+            background-color: #1e293b;
+            color: #cbd5e1;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            height: 200px;
+            overflow-y: auto;
+        }
+        .terminal-line {
+            margin-bottom: 0.5rem;
+        }
+        .api-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+        .status-up {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        .status-down {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
         }
     </style>
 </head>
@@ -138,25 +144,32 @@
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Discord Tokens</label>
-                        <div id="token-container" class="space-y-2">
-                            <!-- Token items will be added here -->
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Discord Bot Token</label>
+                        <div class="relative">
+                            <input type="password" id="discord-token" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Bot MTI5MzE5...">
+                            <button onclick="togglePassword('discord-token')" class="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-eye"></i>
+                            </button>
                         </div>
-                        <button onclick="addTokenField()" class="mt-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm">
-                            <i class="fas fa-plus mr-1"></i> Add Token
-                        </button>
+                        <div class="text-xs text-gray-500 mt-1">Must start with "Bot " followed by your token</div>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Channel IDs</label>
-                        <div id="channel-container" class="flex flex-wrap">
-                            <!-- Channel tags will be added here -->
-                        </div>
-                        <div class="mt-2 flex">
-                            <input type="text" id="channel-input" class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg" placeholder="123456789012345678">
-                            <button onclick="addChannelField()" class="px-4 py-2 bg-purple-600 text-white rounded-r-lg">
-                                <i class="fas fa-plus"></i>
-                            </button>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Channel ID</label>
+                        <input type="text" id="channel-id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="550390090665295892">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Bot Settings</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Check Interval (sec)</label>
+                                <input type="number" id="check-interval" value="10" min="5" max="60" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Response Delay (sec)</label>
+                                <input type="number" id="response-delay" value="3" min="1" max="10" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
                         </div>
                     </div>
                     
@@ -217,7 +230,7 @@
                 <i class="fas fa-chart-line text-blue-500 mr-2"></i> Bot Status
             </h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="bg-blue-50 p-4 rounded-lg">
                     <div class="flex items-center justify-between">
                         <div>
@@ -247,17 +260,27 @@
                         <i class="fas fa-clock text-purple-400 text-xl"></i>
                     </div>
                 </div>
+                
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-yellow-600">API Status</p>
+                            <p id="api-status" class="text-xl font-bold text-yellow-800">Offline</p>
+                        </div>
+                        <i class="fas fa-server text-yellow-400 text-xl"></i>
+                    </div>
+                </div>
             </div>
             
             <div class="mt-4">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm font-medium text-gray-700">Logs</span>
+                    <span class="text-sm font-medium text-gray-700">Bot Logs</span>
                     <button onclick="clearLogs()" class="text-xs text-gray-500 hover:text-gray-700">
                         <i class="fas fa-trash-alt mr-1"></i> Clear
                     </button>
                 </div>
-                <div id="log-container" class="h-40 overflow-y-auto p-3 bg-gray-50 rounded-lg text-sm font-mono text-gray-700">
-                    <div class="text-gray-500">System ready. Configure your settings and start the bot.</div>
+                <div id="log-container" class="terminal">
+                    <div class="terminal-line text-gray-400">System ready. Configure your settings and start the bot.</div>
                 </div>
             </div>
         </div>
@@ -277,8 +300,9 @@
                         <li>Responds as a cute anime girl character</li>
                         <li>Keeps responses short (one line)</li>
                         <li>Uses emojis and anime expressions</li>
-                        <li>Random delays between 5-10 seconds</li>
-                        <li>Processes last 3 messages from each channel</li>
+                        <li>Checks for new messages every 10 seconds</li>
+                        <li>Processes last message in the channel</li>
+                        <li>Ignores messages starting with "bot:"</li>
                     </ul>
                 </div>
                 
@@ -288,7 +312,7 @@
                     </h3>
                     <ul class="list-disc pl-5 space-y-1 text-sm text-indigo-800">
                         <li>Never share your API keys or tokens publicly</li>
-                        <li>Use different tokens for different servers</li>
+                        <li>Use Discord bot tokens (not user tokens)</li>
                         <li>Monitor your bot's activity regularly</li>
                         <li>Set up proper rate limiting</li>
                         <li>Keep your software updated</li>
@@ -310,8 +334,11 @@
         let messageCount = 0;
         let botInterval = null;
         let config = {
-            tokens: [],
-            channels: []
+            geminiKey: "",
+            discordToken: "",
+            channelId: "",
+            checkInterval: 10,
+            responseDelay: 3
         };
         
         // DOM Elements
@@ -322,9 +349,7 @@
         const statusIndicator = document.getElementById('status-indicator');
         const messageCountElement = document.getElementById('message-count');
         const lastActivityElement = document.getElementById('last-activity');
-        const tokenContainer = document.getElementById('token-container');
-        const channelContainer = document.getElementById('channel-container');
-        const channelInput = document.getElementById('channel-input');
+        const apiStatusElement = document.getElementById('api-status');
         
         // Helper functions
         function togglePassword(inputId) {
@@ -339,82 +364,31 @@
             }
         }
         
-        function addTokenField() {
-            const tokenId = 'token-' + Date.now();
-            const tokenElement = document.createElement('div');
-            tokenElement.className = 'token-item';
-            tokenElement.innerHTML = `
-                <div class="status-indicator status-inactive"></div>
-                <div class="flex-1">
-                    <div class="relative">
-                        <input type="password" id="${tokenId}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="MTI5MzE5...">
-                        <button onclick="togglePassword('${tokenId}')" class="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                <button class="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200" onclick="this.parentElement.remove()">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            tokenContainer.appendChild(tokenElement);
-        }
-        
-        function addChannelField() {
-            const channelId = channelInput.value.trim();
-            if (!channelId) return;
-            if (config.channels.includes(channelId)) {
-                addLog(`Channel ${channelId} already added`, 'warning');
-                return;
-            }
-            
-            config.channels.push(channelId);
-            const channelTag = document.createElement('div');
-            channelTag.className = 'channel-tag';
-            channelTag.innerHTML = `
-                <span>${channelId}</span>
-                <button onclick="removeChannel('${channelId}')">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            channelContainer.appendChild(channelTag);
-            channelInput.value = '';
-            
-            addLog(`Added channel: ${channelId}`, 'success');
-        }
-        
-        function removeChannel(channelId) {
-            config.channels = config.channels.filter(id => id !== channelId);
-            document.querySelectorAll('.channel-tag').forEach(tag => {
-                if (tag.textContent.includes(channelId)) {
-                    tag.remove();
-                }
-            });
-            addLog(`Removed channel: ${channelId}`, 'info');
-        }
-        
         function saveConfig() {
-            // Collect tokens
-            config.tokens = [];
-            document.querySelectorAll('#token-container input[type="password"], #token-container input[type="text"]').forEach(input => {
-                if (input.value.trim()) {
-                    config.tokens.push(input.value.trim());
-                }
-            });
+            // Get configuration values
+            config.geminiKey = document.getElementById('gemini-key').value.trim();
+            config.discordToken = document.getElementById('discord-token').value.trim();
+            config.channelId = document.getElementById('channel-id').value.trim();
+            config.checkInterval = parseInt(document.getElementById('check-interval').value) || 10;
+            config.responseDelay = parseInt(document.getElementById('response-delay').value) || 3;
             
             // Validate config
-            if (!document.getElementById('gemini-key').value.trim()) {
+            if (!config.geminiKey) {
                 addLog('Please enter a Gemini API Key', 'error');
                 return;
             }
             
-            if (config.tokens.length === 0) {
-                addLog('Please add at least one Discord token', 'error');
+            if (!config.discordToken) {
+                addLog('Please enter a Discord Bot Token', 'error');
                 return;
             }
             
-            if (config.channels.length === 0) {
-                addLog('Please add at least one channel ID', 'error');
+            if (!config.discordToken.startsWith('Bot ')) {
+                addLog('Discord token must start with "Bot "', 'warning');
+            }
+            
+            if (!config.channelId) {
+                addLog('Please enter a Channel ID', 'error');
                 return;
             }
             
@@ -431,7 +405,7 @@
         }
         
         function testConnection() {
-            if (config.tokens.length === 0 || config.channels.length === 0) {
+            if (!config.geminiKey || !config.discordToken || !config.channelId) {
                 addLog('Please save configuration first', 'error');
                 return;
             }
@@ -443,8 +417,12 @@
                 const success = Math.random() > 0.2; // 80% chance of success for demo
                 if (success) {
                     addLog('✅ Connection test successful!', 'success');
+                    apiStatusElement.textContent = "Online";
+                    apiStatusElement.className = "api-status status-up";
                 } else {
                     addLog('⚠️ Connection failed. Please check your API keys and tokens.', 'error');
+                    apiStatusElement.textContent = "Offline";
+                    apiStatusElement.className = "api-status status-down";
                 }
             }, 1500);
         }
@@ -452,7 +430,7 @@
         function startBot() {
             if (botActive) return;
             
-            if (config.tokens.length === 0 || config.channels.length === 0) {
+            if (!config.geminiKey || !config.discordToken || !config.channelId) {
                 addLog('Please save configuration first', 'error');
                 return;
             }
@@ -461,24 +439,58 @@
             botStatus.textContent = 'Active';
             statusIndicator.className = 'w-4 h-4 bg-green-500 rounded-full pulse';
             addLog('Starting Neko AI bot...', 'info');
-            addLog(`Monitoring ${config.channels.length} channels`, 'info');
+            addLog(`Monitoring channel: ${config.channelId}`, 'info');
+            addLog('Bot is now active and responding to messages', 'success');
             
-            // Update token status indicators
-            document.querySelectorAll('#token-container .status-indicator').forEach(indicator => {
-                indicator.className = 'status-indicator status-active';
-            });
-            
-            // Simulate bot activity - but not self-talking
+            // Start bot simulation
             botInterval = setInterval(() => {
                 // Only update status, not generate messages
                 lastActivityElement.textContent = new Date().toLocaleTimeString();
                 
                 // Occasionally log channel activity
-                if (Math.random() > 0.8) {
-                    const randomChannel = config.channels[Math.floor(Math.random() * config.channels.length)];
-                    addLog(`Monitoring channel: ${randomChannel}`, 'info');
+                if (Math.random() > 0.7) {
+                    addLog(`Checking for new messages in channel ${config.channelId}...`, 'info');
+                    
+                    // Simulate finding a message
+                    if (Math.random() > 0.5) {
+                        const messages = [
+                            "Hey Neko-chan, what's up?",
+                            "Tell me something cute!",
+                            "Nyaa~ How are you today?",
+                            "Can you help me with something?",
+                            "You're so kawaii!"
+                        ];
+                        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+                        
+                        // Simulate message received
+                        if (!randomMessage.toLowerCase().startsWith("bot:")) {
+                            addLog(`Found message: "${randomMessage}"`, 'info');
+                            receiveMessage(randomMessage);
+                            
+                            // Simulate response after delay
+                            setTimeout(() => {
+                                const responses = [
+                                    "Nyaa~ I'm doing great! *tail wags*",
+                                    "Did you know cats have 32 muscles in each ear?  😸",
+                                    "I'm full of energy today! Let's play! ",
+                                    "Of course! I'm here to help you desu~",
+                                    "Ehehe~ You're making me blush!  😊"
+                                ];
+                                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                                sendBotMessage(randomResponse);
+                                
+                                // Update message count
+                                messageCount++;
+                                messageCountElement.textContent = messageCount;
+                            }, config.responseDelay * 1000);
+                        } else {
+                            addLog(`Ignored message starting with "bot:"`, 'info');
+                        }
+                    } else {
+                        addLog('No new messages found', 'info');
+                    }
                 }
-            }, 3000);
+            }, config.checkInterval * 1000);
         }
         
         function stopBot() {
@@ -489,11 +501,8 @@
             botStatus.textContent = 'Inactive';
             statusIndicator.className = 'w-4 h-4 bg-gray-400 rounded-full';
             addLog('Bot stopped successfully.', 'info');
-            
-            // Update token status indicators
-            document.querySelectorAll('#token-container .status-indicator').forEach(indicator => {
-                indicator.className = 'status-indicator status-inactive';
-            });
+            apiStatusElement.textContent = "Offline";
+            apiStatusElement.className = "api-status status-down";
         }
         
         function sendMessage() {
@@ -533,7 +542,15 @@
                 // Update message count for bot response
                 messageCount++;
                 messageCountElement.textContent = messageCount;
-            }, 1000 + Math.random() * 2000);
+            }, config.responseDelay * 1000);
+        }
+        
+        function receiveMessage(message) {
+            addChatMessage(message, 'user');
+        }
+        
+        function sendBotMessage(message) {
+            addChatMessage(message, 'bot');
         }
         
         function addChatMessage(message, sender) {
@@ -567,18 +584,20 @@
         
         function addLog(message, type = 'info') {
             const logEntry = document.createElement('div');
+            logEntry.className = 'terminal-line';
+            
             let icon = 'fa-info-circle';
-            let color = 'text-blue-500';
+            let color = 'text-blue-400';
             
             if (type === 'error') {
                 icon = 'fa-exclamation-circle';
-                color = 'text-red-500';
+                color = 'text-red-400';
             } else if (type === 'success') {
                 icon = 'fa-check-circle';
-                color = 'text-green-500';
+                color = 'text-green-400';
             } else if (type === 'warning') {
                 icon = 'fa-exclamation-triangle';
-                color = 'text-yellow-500';
+                color = 'text-yellow-400';
             }
             
             const timestamp = new Date().toLocaleTimeString();
@@ -593,36 +612,26 @@
         }
         
         function clearLogs() {
-            logContainer.innerHTML = '<div class="text-gray-500">Logs cleared.</div>';
+            logContainer.innerHTML = '<div class="terminal-line text-gray-400">Logs cleared.</div>';
         }
         
-        // Initialize with some demo data
+        // Initialize with saved config
         window.onload = function() {
             addLog('System initialized. Welcome to Neko AI Assistant!', 'info');
-            
-            // Add demo channels
-            config.channels = ['550390090665295892', '987654321098765432'];
-            config.channels.forEach(channelId => {
-                const channelTag = document.createElement('div');
-                channelTag.className = 'channel-tag';
-                channelTag.innerHTML = `
-                    <span>${channelId}</span>
-                    <button onclick="removeChannel('${channelId}')">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-                channelContainer.appendChild(channelTag);
-            });
-            
-            // Add demo tokens
-            addTokenField();
-            addTokenField();
             
             // Load saved config if exists
             const savedConfig = localStorage.getItem('neko-config');
             if (savedConfig) {
                 try {
                     config = JSON.parse(savedConfig);
+                    
+                    // Set form values
+                    document.getElementById('gemini-key').value = config.geminiKey || '';
+                    document.getElementById('discord-token').value = config.discordToken || '';
+                    document.getElementById('channel-id').value = config.channelId || '';
+                    document.getElementById('check-interval').value = config.checkInterval || 10;
+                    document.getElementById('response-delay').value = config.responseDelay || 3;
+                    
                     addLog('Loaded saved configuration', 'success');
                 } catch (e) {
                     addLog('Error loading saved configuration', 'error');
