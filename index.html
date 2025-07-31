@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime AI Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .message-bubble {
+            position: relative;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            max-width: 80%;
+        }
+        .user-message {
+            background-color: #e3f2fd;
+            margin-left: auto;
+            border-bottom-right-radius: 0;
+        }
+        .bot-message {
+            background-color: #fce4ec;
+            margin-right: auto;
+            border-bottom-left-radius: 0;
+        }
+        .typing-indicator {
+            display: flex;
+            padding: 0.5rem;
+        }
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            margin: 0 2px;
+            background-color: #888;
+            border-radius: 50%;
+            opacity: 0;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typingAnimation {
+            0%, 60%, 100% { opacity: 0.3; }
+            30% { opacity: 1; }
+        }
+        .glow {
+            box-shadow: 0 0 15px rgba(255, 105, 180, 0.5);
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <header class="flex flex-col items-center mb-8">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="relative">
+                    <div class="w-16 h-16 bg-pink-400 rounded-full flex items-center justify-center text-white text-2xl glow">
+                        <i class="fas fa-cat"></i>
+                    </div>
+                    <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800">Neko AI Assistant</h1>
+            </div>
+            <p class="text-gray-600 text-center max-w-md">Automate your Discord server with a cute anime AI assistant powered by Gemini API</p>
+        </header>
+
+        <!-- Main Dashboard -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Configuration Panel -->
+            <div class="bg-white rounded-xl shadow-lg p-6 lg:col-span-1">
+                <h2 class="text-xl font-bold mb-4 text-gray-800 flex items-center">
+                    <i class="fas fa-cog text-purple-500 mr-2"></i> Configuration
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Gemini API Key</label>
+                        <div class="relative">
+                            <input type="password" id="gemini-key" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="AIzaSy...">
+                            <button onclick="togglePassword('gemini-key')" class="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Discord Tokens</label>
+                        <div id="token-container" class="space-y-2">
+                            <div class="flex space-x-2">
+                                <input type="password" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="MTI5MzE5...">
+                                <button class="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button onclick="addTokenField()" class="mt-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm">
+                            <i class="fas fa-plus mr-1"></i> Add Token
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Channel IDs</label>
+                        <div id="channel-container" class="space-y-2">
+                            <div class="flex space-x-2">
+                                <input type="text" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="550390090665295892">
+                                <button class="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button onclick="addChannelField()" class="mt-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm">
+                            <i class="fas fa-plus mr-1"></i> Add Channel
+                        </button>
+                    </div>
+                    
+                    <div class="pt-2">
+                        <button onclick="saveConfig()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg font-medium transition duration-200 flex items-center justify-center">
+                            <i class="fas fa-save mr-2"></i> Save Configuration
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Interface -->
+            <div class="bg-white rounded-xl shadow-lg p-6 lg:col-span-2">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-comment-dots text-pink-500 mr-2"></i> Chat Preview
+                    </h2>
+                    <div class="flex space-x-2">
+                        <button onclick="testConnection()" class="px-4 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 text-sm">
+                            <i class="fas fa-plug mr-1"></i> Test Connection
+                        </button>
+                        <button onclick="startBot()" class="px-4 py-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 text-sm">
+                            <i class="fas fa-play mr-1"></i> Start Bot
+                        </button>
+                        <button onclick="stopBot()" class="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm">
+                            <i class="fas fa-stop mr-1"></i> Stop
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="chat-container" class="h-96 overflow-y-auto p-4 bg-gray-50 rounded-lg mb-4">
+                    <div class="message-bubble bot-message">
+                        <p>Nyaa~! I'm your cute anime AI assistant! How can I help you today?  </p>
+                    </div>
+                    <div class="message-bubble user-message">
+                        <p>Hello! What's your name?</p>
+                    </div>
+                    <div class="message-bubble bot-message">
+                        <p>I'm Neko-chan! *purrs* Ready to serve you with kawaii energy!  ✨</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="text" id="chat-input" class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="Type a message...">
+                    <button onclick="sendMessage()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-r-lg">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status Panel -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4 text-gray-800 flex items-center">
+                <i class="fas fa-chart-line text-blue-500 mr-2"></i> Bot Status
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-blue-600">Bot Status</p>
+                            <p id="bot-status" class="text-xl font-bold text-blue-800">Inactive</p>
+                        </div>
+                        <div id="status-indicator" class="w-4 h-4 bg-gray-400 rounded-full"></div>
+                    </div>
+                </div>
+                
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-green-600">Messages Processed</p>
+                            <p id="message-count" class="text-xl font-bold text-green-800">0</p>
+                        </div>
+                        <i class="fas fa-envelope text-green-400 text-xl"></i>
+                    </div>
+                </div>
+                
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-purple-600">Last Activity</p>
+                            <p id="last-activity" class="text-xl font-bold text-purple-800">Never</p>
+                        </div>
+                        <i class="fas fa-clock text-purple-400 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-700">Logs</span>
+                    <button onclick="clearLogs()" class="text-xs text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-trash-alt mr-1"></i> Clear
+                    </button>
+                </div>
+                <div id="log-container" class="h-40 overflow-y-auto p-3 bg-gray-50 rounded-lg text-sm font-mono text-gray-700">
+                    <div class="text-gray-500">System ready. Configure your settings and start the bot.</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold mb-4 text-gray-800 flex items-center">
+                <i class="fas fa-info-circle text-yellow-500 mr-2"></i> How It Works
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-yellow-700 mb-2 flex items-center">
+                        <i class="fas fa-robot mr-2"></i> Bot Behavior
+                    </h3>
+                    <ul class="list-disc pl-5 space-y-1 text-sm text-yellow-800">
+                        <li>Responds as a cute anime girl character</li>
+                        <li>Keeps responses short (one line)</li>
+                        <li>Uses emojis and anime expressions</li>
+                        <li>Random delays between 5-10 seconds</li>
+                        <li>Processes last 3 messages from each channel</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-indigo-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-indigo-700 mb-2 flex items-center">
+                        <i class="fas fa-shield-alt mr-2"></i> Safety Tips
+                    </h3>
+                    <ul class="list-disc pl-5 space-y-1 text-sm text-indigo-800">
+                        <li>Never share your API keys or tokens publicly</li>
+                        <li>Use different tokens for different servers</li>
+                        <li>Monitor your bot's activity regularly</li>
+                        <li>Set up proper rate limiting</li>
+                        <li>Keep your software updated</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="mt-8 text-center text-gray-500 text-sm">
+            <p>Neko AI Assistant - Automate your Discord with cute AI responses</p>
+            <p class="mt-1">Not affiliated with Discord or Google Gemini</p>
+        </footer>
+    </div>
+
+    <script>
+        // Configuration variables
+        let botActive = false;
+        let messageCount = 0;
+        let botInterval = null;
+        
+        // DOM Elements
+        const chatContainer = document.getElementById('chat-container');
+        const chatInput = document.getElementById('chat-input');
+        const logContainer = document.getElementById('log-container');
+        const botStatus = document.getElementById('bot-status');
+        const statusIndicator = document.getElementById('status-indicator');
+        const messageCountElement = document.getElementById('message-count');
+        const lastActivityElement = document.getElementById('last-activity');
+        
+        // Helper functions
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = input.nextElementSibling.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+        
+        function addTokenField() {
+            const container = document.getElementById('token-container');
+            const newField = document.createElement('div');
+            newField.className = 'flex space-x-2';
+            newField.innerHTML = `
+                <input type="password" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="MTI5MzE5...">
+                <button class="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            container.appendChild(newField);
+        }
+        
+        function addChannelField() {
+            const container = document.getElementById('channel-container');
+            const newField = document.createElement('div');
+            newField.className = 'flex space-x-2';
+            newField.innerHTML = `
+                <input type="text" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="550390090665295892">
+                <button class="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            container.appendChild(newField);
+        }
+        
+        function saveConfig() {
+            addLog('Configuration saved successfully!', 'success');
+            // In a real app, you would save to localStorage or send to backend
+        }
+        
+        function testConnection() {
+            addLog('Testing connection to Discord and Gemini API...', 'info');
+            
+            // Simulate connection test
+            setTimeout(() => {
+                const success = Math.random() > 0.2; // 80% chance of success for demo
+                if (success) {
+                    addLog('✅ Connection test successful!', 'success');
+                } else {
+                    addLog('⚠️ Connection failed. Please check your API keys and tokens.', 'error');
+                }
+            }, 1500);
+        }
+        
+        function startBot() {
+            if (botActive) return;
+            
+            botActive = true;
+            botStatus.textContent = 'Active';
+            statusIndicator.className = 'w-4 h-4 bg-green-500 rounded-full pulse';
+            addLog('Starting Neko AI bot...', 'info');
+            
+            // Simulate bot activity
+            botInterval = setInterval(() => {
+                messageCount++;
+                messageCountElement.textContent = messageCount;
+                lastActivityElement.textContent = new Date().toLocaleTimeString();
+                
+                // Simulate receiving a message
+                if (Math.random() > 0.7) { // 30% chance of receiving a message
+                    const messages = [
+                        "Hey Neko-chan, what's up?",
+                        "Tell me something cute!",
+                        "Nyaa~ How are you today?",
+                        "Can you help me with something?",
+                        "You're so kawaii!"
+                    ];
+                    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+                    receiveMessage(randomMessage);
+                    
+                    // Simulate response after delay
+                    setTimeout(() => {
+                        const responses = [
+                            "Nyaa~ I'm doing great! *tail wags*",
+                            "Did you know cats have 32 muscles in each ear?  😸",
+                            "I'm full of energy today! Let's play! ",
+                            "Of course! I'm here to help you desu~",
+                            "Ehehe~ You're making me blush!  😊"
+                        ];
+                        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                        sendBotMessage(randomResponse);
+                    }, 1000 + Math.random() * 2000);
+                }
+                
+                addLog(`Bot is running... Processed ${messageCount} messages`, 'info');
+            }, 3000);
+        }
+        
+        function stopBot() {
+            if (!botActive) return;
+            
+            clearInterval(botInterval);
+            botActive = false;
+            botStatus.textContent = 'Inactive';
+            statusIndicator.className = 'w-4 h-4 bg-gray-400 rounded-full';
+            addLog('Bot stopped successfully.', 'info');
+        }
+        
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            // Add user message to chat
+            addChatMessage(message, 'user');
+            chatInput.value = '';
+            
+            // Simulate bot thinking
+            showTypingIndicator();
+            
+            // Simulate bot response after delay
+            setTimeout(() => {
+                hideTypingIndicator();
+                const responses = [
+                    "Nyaa~ That's interesting! *tilts head*",
+                    "I'm not sure I understand, but I'll try my best!  😅",
+                    "Hmm... let me think about that! *paws at chin*",
+                    "Ehehe~ You're so funny! 😹",
+                    "I'd love to help with that! What do you need?  🐾"
+                ];
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                sendBotMessage(randomResponse);
+            }, 1000 + Math.random() * 2000);
+        }
+        
+        function receiveMessage(message) {
+            addChatMessage(message, 'user');
+        }
+        
+        function sendBotMessage(message) {
+            addChatMessage(message, 'bot');
+        }
+        
+        function addChatMessage(message, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-bubble ${sender}-message`;
+            messageDiv.innerHTML = `<p>${message}</p>`;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            `;
+            chatContainer.appendChild(typingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        function hideTypingIndicator() {
+            const typingDiv = document.getElementById('typing-indicator');
+            if (typingDiv) {
+                typingDiv.remove();
+            }
+        }
+        
+        function addLog(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            let icon = 'fa-info-circle';
+            let color = 'text-blue-500';
+            
+            if (type === 'error') {
+                icon = 'fa-exclamation-circle';
+                color = 'text-red-500';
+            } else if (type === 'success') {
+                icon = 'fa-check-circle';
+                color = 'text-green-500';
+            } else if (type === 'warning') {
+                icon = 'fa-exclamation-triangle';
+                color = 'text-yellow-500';
+            }
+            
+            const timestamp = new Date().toLocaleTimeString();
+            logEntry.innerHTML = `
+                <span class="${color}">
+                    <i class="fas ${icon} mr-1"></i> [${timestamp}]
+                </span>
+                ${message}
+            `;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function clearLogs() {
+            logContainer.innerHTML = '<div class="text-gray-500">Logs cleared.</div>';
+        }
+        
+        // Initialize with some demo data
+        window.onload = function() {
+            addLog('System initialized. Welcome to Neko AI Assistant!', 'info');
+            
+            // Add demo tokens and channels
+            setTimeout(() => {
+                addTokenField();
+                addChannelField();
+            }, 500);
+        };
+        
+        // Allow sending message with Enter key
+        chatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
