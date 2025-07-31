@@ -128,9 +128,12 @@
                         </button>
                     </div>
                     
-                    <div class="pt-2">
-                        <button onclick="saveConfig()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg font-medium transition duration-200 flex items-center justify-center">
-                            <i class="fas fa-save mr-2"></i> Save Configuration
+                    <div class="pt-2 grid grid-cols-2 gap-4">
+                        <button onclick="saveConfig()" class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg font-medium transition duration-200 flex items-center justify-center">
+                            <i class="fas fa-save mr-2"></i> Save
+                        </button>
+                        <button onclick="saveAndStart()" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition duration-200 flex items-center justify-center">
+                            <i class="fas fa-play mr-2"></i> Save & Start
                         </button>
                     </div>
                 </div>
@@ -326,6 +329,13 @@
         function saveConfig() {
             addLog('Configuration saved successfully!', 'success');
             // In a real app, you would save to localStorage or send to backend
+        }
+        
+        function saveAndStart() {
+            saveConfig();
+            setTimeout(() => {
+                startBot();
+            }, 500);
         }
         
         function testConnection() {
